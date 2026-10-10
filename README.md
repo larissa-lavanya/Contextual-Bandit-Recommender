@@ -7,7 +7,7 @@ It answers two questions that every ads/recommendation team faces:
 1. **Learning:** how do we find a good policy while still exploring? (bandit algorithms, a neural bandit, offline policy learning)
 2. **Evaluation:** how do we know a policy is good **without deploying it**? (replay evaluation and off-policy estimators: DM, IPS, SNIPS, DR, weight clipping)
 
-Every module is short, uses plain numpy/PyTorch, and implements the algorithms from scratch (the `obp` library is only used, optionally, to get a small sample of the data).
+The code is written to be read. Every module is short, uses plain numpy/PyTorch, and implements the algorithms from scratch (the `obp` library is only used, optionally, to get a small sample of the data).
 
 ---
 
@@ -163,16 +163,25 @@ contextual-bandit-ope/
 
 ## 5. Setup
 
-Requires Python 3.9+.
+Requires Python 3.9+ (tested with 3.13). Always use a **fresh virtual environment**.
 
 ```bash
-python -m venv .venv
+python3 -m venv .venv                # on Debian/Ubuntu: sudo apt install python3-venv  (or python3.13-venv)
 source .venv/bin/activate            # Windows: .venv\Scripts\activate
+export PYTHONNOUSERSITE=1            # stops packages in ~/.local from leaking into the venv
+python --version                     # confirm it is the version you expect
 pip install -r requirements.txt
 
 # Optional: the small bundled sample, for a quick check (no extra dependencies)
 pip install obp --no-deps
 ```
+
+Notes:
+
+* On Debian/Ubuntu, `pip install` outside a venv fails with `externally-managed-environment`. Use the venv above, not `--break-system-packages`.
+* `torch` is large (hundreds of MB). For a CPU-only install: `pip install torch --index-url https://download.pytorch.org/whl/cpu`, then `pip install -r requirements.txt`.
+* `pip install obp --no-deps` may print "inconsistent version" messages while pip searches for a compatible release, and ends up installing `obp 0.4.1`. That is fine: only the bundled sample data is used, not the package code.
+* Do not install `obp` without `--no-deps`; it pins old versions of numpy, scikit-learn and others.
 
 Verify the install:
 
@@ -333,6 +342,8 @@ The tests use synthetic data where the true answer is known:
 | Results look random or all zeros | You are probably on the 10k-row sample (about 80 matched rounds). Use the full dataset. |
 | `NaN` relative RMSE | The ground-truth value of that policy is 0 (sample data), so a relative error is undefined. |
 | `ModuleNotFoundError: torch` | `pip install torch`. It is only needed for the neural bandit and Part B; use `--algos` to skip `neural`. |
+| `No module named 'pandas._libs...'` or `Failed to load PyTorch C extensions` | Packages built for a different Python version are leaking in from `~/.local`. Recreate the venv with `PYTHONNOUSERSITE=1` set (see Setup). |
+| `externally-managed-environment` | Debian/Ubuntu blocks system-wide pip. Create and activate a venv first. |
 | `ModuleNotFoundError: bandit_ope` | Run scripts from the project root: `python scripts/run_replay.py`. |
 
 ---
